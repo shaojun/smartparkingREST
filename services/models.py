@@ -12,7 +12,7 @@ class Building(models.Model):
 
 class Board(models.Model):
     ownerBuilding = models.ForeignKey(Building)
-    isCovered = models.BooleanField("If obstacle sensor covered by sth, the value is True, otherwise False")
+    isCovered = models.BooleanField("If obstacle sensor covered by sth, the value will be True, otherwise False")
     #isLocked = models.BooleanField("If obstacle sensor covered by sth, the value is True, otherwise False")
     coordinateX = models.IntegerField(default=0, help_text='X coordinate for this board located in a building')
     coordinateY = models.IntegerField(default=0, help_text='Y coordinate for this board located in a building')
