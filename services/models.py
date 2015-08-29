@@ -1,23 +1,28 @@
 from django.db import models
 from django.utils.timezone import utc
+from django.contrib.auth.models import User
 import datetime
 
 
 class Building(models.Model):
     mapUrl = models.CharField(max_length=300, null=True, help_text='map url for this building.')
     description = models.TextField(null=True,
-                                   help_text='additional description for this building')
+                                   help_text='additional description for this building, where it located, name and etc.')
     creationTime = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return "Building with pk: " + str(self.pk)
 
 
 class Board(models.Model):
     ownerBuilding = models.ForeignKey(Building)
     isCovered = models.BooleanField("If obstacle sensor covered by sth, the value will be True, otherwise False")
-    #isLocked = models.BooleanField("If obstacle sensor covered by sth, the value is True, otherwise False")
+    # isLocked = models.BooleanField("If obstacle sensor covered by sth, the value is True, otherwise False")
     coordinateX = models.IntegerField(default=0, help_text='X coordinate for this board located in a building')
     coordinateY = models.IntegerField(default=0, help_text='Y coordinate for this board located in a building')
     description = models.TextField(null=True,
                                    help_text='additional description for this board, will show in mobile device')
+
     def __str__(self):
         if self.isCovered:
             return "board: " + str(self.pk) + " (occupied), with X-Y coor:" + str(self.coordinateX) + "-" + str(
@@ -59,8 +64,8 @@ class BeaconAround(models.Model):
     since_last_refresh_due.short_description = "last Refresh due(s)"
 
 
-class User(models.Model):
-    user_Name = models.CharField(max_length=200, unique=True)
+class UserInfo(models.Model):
+    user = models.ForeignKey(User, related_name='parkingUser')
     uuid = models.CharField(max_length=40)
     major_Id = models.CharField(max_length=20)
     minor_Id = models.CharField(max_length=20)
@@ -68,21 +73,43 @@ class User(models.Model):
     creation_Time = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.user_Name + " (registered with uuid: " + self.uuid + "|" + self.major_Id + "|" + self.minor_Id + ")"
+        return str(self.user) + " (registered with uuid: " + self.uuid + "|" + self.major_Id + "|" + self.minor_Id + ")"
 
 
 class Order(models.Model):
-    by_User = models.ForeignKey(User)
+    owner = models.ForeignKey(User,related_name='orders')
     to_Board = models.ForeignKey(Board)
     creation_Time = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=200)
 
     def __str__(self):
         return "order is on board:'" + str(
-            self.to_Board.board_Id) + "' by users: '" + self.by_User.user_Name + "' at: '" + str(
+            self.to_Board.pk) + "' by users: '" + str(self.owner) + "' at: '" + str(
             self.creation_Time) + "', now status: '" + self.status + "'"
 
     def ownedbyuserstr(self):
-        return str(self.by_User)
+        return str(self.owner)
 
     ownedbyuserstr.short_description = "Put by"
+
+class Sample(models.Model):
+    ownerBuilding = models.ForeignKey(Building)
+    coordinateX = models.IntegerField(default=0, help_text='X coordinate for this sampling point located in a building')
+    coordinateY = models.IntegerField(default=0, help_text='Y coordinate for this sampling point located in a building')
+    #sampleSignalDescriptors = models.CharField(max_length=200)
+    creation_Time = models.DateTimeField(auto_now_add=True)
+
+class SampleDescriptor(models.Model):
+    ownerSample = models.ForeignKey(Sample)
+    uuid = models.CharField(max_length=40)
+    major_Id = models.CharField(max_length=20)
+    minor_Id = models.CharField(max_length=20)
+    mac_address = models.CharField(max_length=40)
+    tx_value = models.IntegerField(default=0)
+    rssi_value = models.IntegerField(default=0)
+    caculated_distance = models.FloatField()
+    creation_Time = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return "uuid: " + self.uuid + "|" + self.major_Id + "|" + self.minor_Id + ", rssi: " + str(
+            self.rssi_value) + ", dis(meter): " + str(self.caculated_distance)

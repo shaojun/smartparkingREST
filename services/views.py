@@ -3,49 +3,90 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from services.models import Building
-from services.serializers import BuildingSerializer
+from services.models import UserInfo
+from services.serializers import *
+from rest_framework import generics
+from rest_framework import permissions
 
+class BuildingList(generics.ListCreateAPIView):
+    queryset = Building.objects.all()
+    serializer_class = BuildingSerializer
 
-@api_view(['GET', 'POST'])
-def Building_list(request, format=None):
-    """
-    List all code snippets, or create a new snippet.
-    """
-    if request.method == 'GET':
-        snippets = Building.objects.all()
-        serializer = BuildingSerializer(snippets, many=True)
-        return Response(serializer.data)
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
-    elif request.method == 'POST':
-        serializer = BuildingSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class BuildingDetail(generics.RetrieveUpdateAPIView):
+    queryset = Building.objects.all()
+    serializer_class = BuildingSerializer
 
+class BoardList(generics.ListCreateAPIView):
+    queryset = Board.objects.all()
+    serializer_class = BoardSerializer
 
-@api_view(['GET', 'PUT', 'DELETE'])
-def Building_detail(request, pk, format=None):
-    """
-    Retrieve, update or delete a code Building.
-    """
-    try:
-        snippet = Building.objects.get(pk=pk)
-    except Building.DoesNotExist:
-        return HttpResponse(status=status.HTTP_404_NOT_FOUND)
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
-    if request.method == 'GET':
-        serializer = BuildingSerializer(snippet)
-        return Response(serializer.data)
+class BoardDetail(generics.RetrieveUpdateAPIView):
+    queryset = Board.objects.all()
+    serializer_class = BoardSerializer
 
-    elif request.method == 'PUT':
-        serializer = BuildingSerializer(snippet, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class BeaconAroundList(generics.ListCreateAPIView):
+    queryset = BeaconAround.objects.all()
+    serializer_class = BeaconAroundSerializer
 
-    elif request.method == 'DELETE':
-        Building.delete()
-        return HttpResponse(status=status.HTTP_204_NO_CONTENT)
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+class BeaconAroundDetail(generics.RetrieveUpdateAPIView):
+    queryset = BeaconAround.objects.all()
+    serializer_class = BeaconAroundSerializer
+
+class UserInfoList(generics.ListCreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserInfoSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+class UserInfoDetail(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserInfoSerializer
+
+class OrderList(generics.ListCreateAPIView):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+class OrderDetail(generics.RetrieveAPIView):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+
+class SampleList(generics.ListCreateAPIView):
+    queryset = Sample.objects.all()
+    serializer_class = SampleSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+class SampleDetail(generics.RetrieveAPIView):
+    queryset = Sample.objects.all()
+    serializer_class = SampleSerializer
+
+class SampleDescriptorList(generics.ListCreateAPIView):
+    queryset = SampleDescriptor.objects.all()
+    serializer_class = SampleDescriptorSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+class SampleDescriptorDetail(generics.RetrieveAPIView):
+    queryset = SampleDescriptor.objects.all()
+    serializer_class = SampleDescriptorSerializer
+
+def test(request):
+    userinfos = UserInfo.objects.all()
+    return HttpResponse(str(userinfos[0].__dict__))
