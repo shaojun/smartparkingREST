@@ -77,7 +77,7 @@ class UserInfo(models.Model):
 
 
 class Order(models.Model):
-    owner = models.ForeignKey(User,related_name='orders')
+    owner = models.ForeignKey(UserInfo, related_name='orders')
     to_Board = models.ForeignKey(Board)
     creation_Time = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=200)
@@ -92,15 +92,17 @@ class Order(models.Model):
 
     ownedbyuserstr.short_description = "Put by"
 
+
 class Sample(models.Model):
     ownerBuilding = models.ForeignKey(Building)
     coordinateX = models.IntegerField(default=0, help_text='X coordinate for this sampling point located in a building')
     coordinateY = models.IntegerField(default=0, help_text='Y coordinate for this sampling point located in a building')
-    #sampleSignalDescriptors = models.CharField(max_length=200)
+    # sampleSignalDescriptors = models.CharField(max_length=200)
     creation_Time = models.DateTimeField(auto_now_add=True)
 
+
 class SampleDescriptor(models.Model):
-    ownerSample = models.ForeignKey(Sample)
+    ownerSample = models.ForeignKey(Sample, related_name='sampleDescriptors')
     uuid = models.CharField(max_length=40)
     major_Id = models.CharField(max_length=20)
     minor_Id = models.CharField(max_length=20)
