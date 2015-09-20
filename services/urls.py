@@ -13,8 +13,8 @@ urlpatterns = [
     url(r'^boards/(?P<pk>[0-9]+)/$', views.BoardDetail.as_view(), name='board-detail'),
     url(r'^beaconArounds/$', views.BeaconAroundList.as_view(), name='beaconAround-list'),
     url(r'^beaconArounds/(?P<pk>[0-9]+)/$', views.BeaconAroundDetail.as_view(), name='beaconAround-detail'),
-    url(r'^usersInfo/$', views.UserInfoList.as_view(), name='userInfo-list'),
-    url(r'^usersInfo/(?P<pk>[0-9]+)/$', views.UserInfoDetail.as_view(), name='userInfo-detail'),
+    url(r'^usersInfo/$', views.UserInfoList.as_view(), name='userinfo-list'),
+    url(r'^usersInfo/(?P<pk>[0-9]+)/$', views.UserInfoDetail.as_view(), name='userinfo-detail'),
     url(r'^users/$', views.UserList.as_view(), name='user-list'),
     url(r'^users/(?P<pk>[0-9]+)/$', views.UserDetail.as_view(), name='user-detail'),
     url(r'^orders/$', views.OrderList.as_view(), name='order-list'),
@@ -23,7 +23,8 @@ urlpatterns = [
     url(r'^samples/(?P<pk>[0-9]+)/$', views.SampleDetail.as_view(), name='sample-detail'),
     url(r'^sampleDescriptors/$', views.SampleDescriptorList.as_view(), name='sampleDescriptor-list'),
     url(r'^sampleDescriptors/(?P<pk>[0-9]+)/$', views.SampleDescriptorDetail.as_view(), name='sampleDescriptor-detail'),
-    url(r'^test/$', views.test),
+    url(r'^test0/$', views.test0),
+    url(r'^test1/$', views.test1),
 ]
 
 urlpatterns += [

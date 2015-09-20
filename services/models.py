@@ -6,6 +6,8 @@ import datetime
 
 class Building(models.Model):
     mapUrl = models.CharField(max_length=300, null=True, help_text='map url for this building.')
+    latitude = models.CharField(default='0',max_length=60, help_text='latitude for this building')
+    longitude = models.CharField(default='0',max_length=60, help_text='longitude for this building')
     description = models.TextField(null=True,
                                    help_text='additional description for this building, where it located, name and etc.')
     creationTime = models.DateTimeField(auto_now_add=True)
@@ -15,7 +17,7 @@ class Building(models.Model):
 
 
 class Board(models.Model):
-    ownerBuilding = models.ForeignKey(Building)
+    ownerBuilding = models.ForeignKey(Building, related_name='boards')
     isCovered = models.BooleanField("If obstacle sensor covered by sth, the value will be True, otherwise False")
     # isLocked = models.BooleanField("If obstacle sensor covered by sth, the value is True, otherwise False")
     coordinateX = models.IntegerField(default=0, help_text='X coordinate for this board located in a building')
