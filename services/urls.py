@@ -23,7 +23,8 @@ urlpatterns = [
     url(r'^samples/(?P<pk>[0-9]+)/$', views.SampleDetail.as_view(), name='sample-detail'),
     url(r'^sampleDescriptors/$', views.SampleDescriptorList.as_view(), name='sampleDescriptor-list'),
     url(r'^sampleDescriptors/(?P<pk>[0-9]+)/$', views.SampleDescriptorDetail.as_view(), name='sampleDescriptor-detail'),
-    url(r'^test0/$', views.test0),
+    url(r'^(?i)uploadBuildingMaps/$', views.uploadFiles, name='upload'),
+    url(r'^(?i)uploadBuildingMaps/delete/$', views.deleteUploadedFile, name='deleteUploadedFile'),
     url(r'^test1/$', views.test1),
 ]
 

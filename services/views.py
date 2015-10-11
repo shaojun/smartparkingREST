@@ -4,6 +4,8 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from services.models import UserInfo
+from .models import Document
+from .forms import DocumentForm
 from services.serializers import *
 from rest_framework import generics
 from rest_framework import permissions
@@ -11,6 +13,11 @@ from rest_framework.reverse import reverse
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
 from services.permissions import *
+from django.http import HttpResponseRedirect
+from django.template import RequestContext
+from django.shortcuts import render_to_response
+from django.conf import settings
+import os
 
 
 @api_view(('GET',))
@@ -46,8 +53,17 @@ class BoardList(generics.ListCreateAPIView):
     queryset = Board.objects.all()
     serializer_class = BoardSerializer
     permission_classes = (permissions.IsAuthenticated, IsRobotsGroupOrReadOnly)
-    # def perform_create(self, serializer):
-    #     serializer.save(owner=self.request.user)
+
+    def get_queryset(self):
+        queryset = Board.objects.all()
+        ownerBuildingId = self.request.query_params.get('ownerBuildingId', None)
+
+        if ownerBuildingId is not None:
+            queryset = queryset.filter(ownerBuilding=ownerBuildingId)
+
+        return queryset
+        # def perform_create(self, serializer):
+        #     serializer.save(owner=self.request.user)
 
 
 class BoardDetail(generics.RetrieveUpdateAPIView):
@@ -84,11 +100,11 @@ class UserInfoList(generics.ListCreateAPIView):
         # else:
         return UserInfo.objects.filter(user=self.request.user)
 
-            # def list(self, request):
-            #     # Note the use of `get_queryset()` instead of `self.queryset`
-            #     queryset = self.get_queryset()
-            #     serializer = UserSerializer(queryset, many=True)
-            #     return Response(serializer.data)
+        # def list(self, request):
+        #     # Note the use of `get_queryset()` instead of `self.queryset`
+        #     queryset = self.get_queryset()
+        #     serializer = UserSerializer(queryset, many=True)
+        #     return Response(serializer.data)
 
 
 class UserInfoDetail(generics.RetrieveAPIView):
@@ -138,6 +154,14 @@ class SampleList(generics.ListCreateAPIView):
     serializer_class = SampleSerializer
     permission_classes = (permissions.IsAuthenticated, IsTechniciansGroupOrReadOnly,)
 
+    def get_queryset(self):
+        queryset = Sample.objects.all()
+        ownerBuildingId = self.request.query_params.get('ownerBuildingId', None)
+
+        if ownerBuildingId is not None:
+            queryset = queryset.filter(ownerBuilding=ownerBuildingId)
+
+        return queryset
     # def perform_create(self, serializer):
     #     serializer.save(owner=self.request.user)
 
@@ -170,10 +194,73 @@ def test0(request):
     # for g in gggg:
     #     result +=str(g.__dict__)+"-------"
     return HttpResponse(str(gggg[0].__dict__))
-    #return HttpResponse(str(gggg[0].__dict__) + "----------" + str(userinfos[1].__dict__)+ "----------" + str(userinfos[2].__dict__)+ "----------" + str(userinfos[3].__dict__)+ "----------" + str(userinfos[4].__dict__))
+    # return HttpResponse(str(gggg[0].__dict__) + "----------" + str(userinfos[1].__dict__)+ "----------" + str(userinfos[2].__dict__)+ "----------" + str(userinfos[3].__dict__)+ "----------" + str(userinfos[4].__dict__))
 
 
 def test1(request):
     groups = Group.objects.all()
     return HttpResponse(
         str(groups[0].__dict__) + "----------" + str(groups[1].__dict__) + "----------" + str(groups[2].__dict__))
+
+
+# ====================== upload files =========================
+
+def uploadFiles(request):
+    # Load documents for the list page
+    documents = Document.objects.all()
+    # if request.method == 'GET':
+    #     returnStr = ""
+    #     # return HttpResponse(str(documents[0].__dict__))
+    #     for d in documents:
+    #         returnStr += d.docfile.url + "</br>"
+    #     return HttpResponse(returnStr)
+
+    # Handle file upload
+    if request.method == 'POST':
+        form = DocumentForm(request.POST, request.FILES)
+        # 100 px equal how many real life meters, like say the value is 5, means
+        # 100px in bitmap equal 5meters, default set to 2.
+        # mapscale = request.POST["mapScale"]
+        if form.is_valid():
+            # return render_to_response("pending to save")
+            newdoc = Document(docfile=request.FILES['docfile'])  # , mapscale=mapscale)
+            # newdoc.mapscale = mapscale
+            newdoc.save()
+            # return HttpResponse(str(newdoc.__dict__))
+            # handle_uploaded_file(request.FILES['file'])
+            # Redirect to the document list after POST
+            return HttpResponseRedirect(reverse('services.views.uploadFiles'))
+    else:
+        form = DocumentForm()  # A empty, unbound form
+    # Render list page with the documents and the form
+    return render_to_response(
+        'services/uploadFile.html',
+        {'documents': documents, 'form': form},
+        context_instance=RequestContext(request)
+    )
+
+
+def displayalluploadedfilesurl(request):
+    # Load documents for the list page
+    documents = Document.objects.all()
+
+
+def handle_uploaded_file(f):
+    with open('name.txt', 'wb+') as destination:
+        for chunk in f.chunks():
+            destination.write(chunk)
+
+
+def deleteUploadedFile(request):
+    fileName = request.GET.get("filename")
+    if not fileName:
+        raise Exception(
+            "need provide the filename for deleting")
+    targetFile = Document.objects.get(docfile=fileName)
+    targetFile.delete()
+    # allFiles = Document.objects.get(docfile=filename)
+    # logStr = ""
+    # for oneFile in allFiles:
+    # logStr += settings.MEDIA_ROOT + str(oneFile.docfile) + "</br>"
+    os.remove('/var/www/upload/' + fileName)
+    return HttpResponse("Delete: " + fileName + " succeed")

@@ -6,8 +6,8 @@ import datetime
 
 class Building(models.Model):
     mapUrl = models.CharField(max_length=300, null=True, help_text='map url for this building.')
-    latitude = models.CharField(default='0',max_length=60, help_text='latitude for this building')
-    longitude = models.CharField(default='0',max_length=60, help_text='longitude for this building')
+    latitude = models.CharField(default='0', max_length=60, help_text='latitude for this building')
+    longitude = models.CharField(default='0', max_length=60, help_text='longitude for this building')
     description = models.TextField(null=True,
                                    help_text='additional description for this building, where it located, name and etc.')
     creationTime = models.DateTimeField(auto_now_add=True)
@@ -101,6 +101,11 @@ class Sample(models.Model):
     coordinateY = models.IntegerField(default=0, help_text='Y coordinate for this sampling point located in a building')
     # sampleSignalDescriptors = models.CharField(max_length=200)
     creation_Time = models.DateTimeField(auto_now_add=True)
+    description = models.TextField(null=True,
+                                   help_text='additional description for this sample point.')
+
+    def __str__(self):
+        return "Sample for building " + str(self.ownerBuilding)
 
 
 class SampleDescriptor(models.Model):
@@ -117,3 +122,11 @@ class SampleDescriptor(models.Model):
     def __str__(self):
         return "uuid: " + self.uuid + "|" + self.major_Id + "|" + self.minor_Id + ", rssi: " + str(
             self.rssi_value) + ", dis(meter): " + str(self.caculated_distance)
+
+
+# Create your models here.
+class Document(models.Model):
+    docfile = models.FileField(upload_to='uploadedmaps/%m/%d')
+    # 100 px equal how many real life meters, like say the value is 5, means
+    # 100px in bitmap equal 5meters, default set to 2.
+    # mapscale = models.FloatField(default=2)

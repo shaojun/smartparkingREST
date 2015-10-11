@@ -8,7 +8,7 @@ class BuildingSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Building
-        fields = ('url', 'mapUrl', 'latitude', 'longitude', 'description', 'creationTime', 'boards')
+        fields = ('url','id', 'mapUrl', 'latitude', 'longitude', 'description', 'creationTime', 'boards')
 
 
 class BoardSerializer(serializers.HyperlinkedModelSerializer):
@@ -67,7 +67,7 @@ class SampleSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Sample
-        fields = ('url', 'ownerBuilding', 'sampleDescriptors', 'coordinateX', 'coordinateY', 'creation_Time')
+        fields = ('url', 'ownerBuilding', 'sampleDescriptors', 'coordinateX', 'coordinateY', 'creation_Time','description')
 
 
 class SampleDescriptorSerializer(serializers.HyperlinkedModelSerializer):

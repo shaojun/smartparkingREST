@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Upload Building Map</title>
+</head>
+<body>
+<h2>Upload document:</h2>
+<!-- Upload form. Note enctype attribute! -->
+<form action="{% url 'upload' %}" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <p>{{ form.non_field_errors }}</p>
+
+    <p>{{ form.docfile.label_tag }} {{ form.docfile.help_text }}</p>
+
+    <p>
+        {{ form.docfile.errors }}
+        {{ form.docfile }}
+    </p>
+     <!--<p>-->
+         <!--And specify the <b>MapScale</b>(100px in picture equals how many meters in real life?)-->
+         <!--<br><input id="mapScale" name="mapScale" type="text" value="2"/>-->
+    <!--</p>-->
+
+    <p><input type="submit" value="Upload"/></p>
+</form>
+<!-- List of uploaded documents -->
+<h2>Existed documents:</h2>
+{% if documents %}
+<ul>
+    {% for document in documents %}
+    <li><a href="{{ document.docfile.url }}">{{ document.docfile.name }}</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <a href="{% url 'deleteUploadedFile' %}?filename={{ document.docfile.name }}">->Delete</a></li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>No documents yet.</p>
+{% endif %}
+</body>
+</html> 
