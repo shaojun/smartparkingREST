@@ -8,13 +8,16 @@ class BuildingSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Building
-        fields = ('url','id', 'mapUrl', 'latitude', 'longitude', 'description', 'creationTime', 'boards')
+        fields = ('url', 'id', 'mapUrl', 'latitude', 'longitude', 'description', 'creationTime', 'boards')
 
 
 class BoardSerializer(serializers.HyperlinkedModelSerializer):
+    orderDetail = serializers.HyperlinkedRelatedField(many=True, read_only=True, view_name='order-detail')
+
     class Meta:
         model = Board
-        # fields = ()
+        fields = ('url', 'boardIdentity', 'ownerBuilding', 'isCovered', 'orderDetail', 'coordinateX', 'coordinateY',
+                  'description')
 
 
 class BeaconAroundSerializer(serializers.HyperlinkedModelSerializer):
@@ -32,7 +35,7 @@ class UserInfoSerializer(serializers.HyperlinkedModelSerializer):
     # date_joined = serializers.ReadOnlyField(source='user.date_joined')
     # user = serializers.HyperlinkedRelatedField(many=False, read_only=True, view_name='user-detail')
     user_name = serializers.ReadOnlyField(source='user.username')
-    groups = serializers.StringRelatedField(many=True,source='user.groups')
+    groups = serializers.StringRelatedField(many=True, source='user.groups')
 
     class Meta:
         model = UserInfo
@@ -53,21 +56,27 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
 class OrderSerializer(serializers.HyperlinkedModelSerializer):
     # owner below is like a re-mapping property 'owner' for Order, so means the Order must have 'owner' property first.
-    owner = serializers.HyperlinkedRelatedField(many=False, read_only=True, view_name='userInfo-detail')
+    #owner = serializers.HyperlinkedRelatedField(many=False, read_only=True, view_name='userinfo-detail')
+    owner_uuid = serializers.ReadOnlyField(source='owner.uuid')
+    owner_majorId = serializers.ReadOnlyField(source='owner.major_Id')
+    owner_minorId = serializers.ReadOnlyField(source='owner.minor_Id')
 
     class Meta:
         model = Order
+        fields = ('owner', 'owner_uuid', 'owner_majorId', 'owner_minorId', 'status', 'to_Board', 'creation_Time')
 
 
 class SampleSerializer(serializers.HyperlinkedModelSerializer):
     # owner below is like a re-mapping property 'ownerBuilding' for Order, so means the Order must have 'ownerBuilding' property first.
-    ownerBuilding = serializers.HyperlinkedRelatedField(many=False, read_only=True, view_name='building-detail')
+    ownerBuilding = serializers.HyperlinkedRelatedField(many=False, required=True, queryset=Building.objects.all(),
+                                                        view_name='building-detail')
     sampleDescriptors = serializers.HyperlinkedRelatedField(many=True, read_only=True,
-                                                            view_name='sampleDescriptor-detail')
+                                                            view_name='sampledescriptor-detail')
 
     class Meta:
         model = Sample
-        fields = ('url', 'ownerBuilding', 'sampleDescriptors', 'coordinateX', 'coordinateY', 'creation_Time','description')
+        fields = (
+            'url', 'ownerBuilding', 'sampleDescriptors', 'coordinateX', 'coordinateY', 'creation_Time', 'description')
 
 
 class SampleDescriptorSerializer(serializers.HyperlinkedModelSerializer):
@@ -77,6 +86,6 @@ class SampleDescriptorSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = SampleDescriptor
         fields = (
-            'ownerSample', 'uuid', 'major_Id', 'minor_Id', 'mac_address', 'tx_value', 'rssi_value',
+            'url', 'ownerSample', 'uuid', 'major_Id', 'minor_Id', 'mac_address', 'tx_value', 'rssi_value',
             'caculated_distance',
             'creation_Time')

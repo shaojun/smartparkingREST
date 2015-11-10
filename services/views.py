@@ -30,7 +30,7 @@ def api_root(request, format=None):
         'users': reverse('user-list', request=request, format=format),
         'orders': reverse('order-list', request=request, format=format),
         'samples': reverse('sample-list', request=request, format=format),
-        'sampleDescriptors': reverse('sampleDescriptor-list', request=request, format=format)
+        'sampledescriptors': reverse('sampledescriptor-list', request=request, format=format)
     })
 
 
@@ -95,10 +95,10 @@ class UserInfoList(generics.ListCreateAPIView):
 
     def get_queryset(self):
         # for superUsers Group, list all users, otherwise, only list the current authenticated user information.
-        # if self.request.user.groups.filter(name='SuperUsers').exists():
-        #     return UserInfo.objects.all()
-        # else:
-        return UserInfo.objects.filter(user=self.request.user)
+        if self.request.user.groups.filter(name='SuperUsers').exists():
+            return UserInfo.objects.all()
+        else:
+            return UserInfo.objects.filter(user=self.request.user)
 
         # def list(self, request):
         #     # Note the use of `get_queryset()` instead of `self.queryset`
@@ -120,10 +120,10 @@ class UserList(generics.ListCreateAPIView):
 
     def get_queryset(self):
         # for superUsers Group, list all users, otherwise, only list the current authenticated user information.
-        # if self.request.user.groups.filter(name='SuperUsers').exists():
-        #     return User.objects.all()
-        # else:
-        return User.objects.filter(id=self.request.user.id)
+        if self.request.user.groups.filter(name='SuperUsers').exists():
+            return User.objects.all()
+        else:
+            return User.objects.filter(id=self.request.user.id)
 
 
 class UserDetail(generics.RetrieveAPIView):
@@ -137,10 +137,20 @@ class OrderList(generics.ListCreateAPIView):
     serializer_class = OrderSerializer
     permission_classes = (permissions.IsAuthenticated, IsOwnerOrDeny)
 
-    # def perform_create(self, serializer):
-    #     newUserInfo = UserInfo()
-    #     newUserInfo.user = self.request.user
-    #     serializer.save(owner=newUserInfo)
+    def get_queryset(self):
+        queryset = Order.objects.all()
+        ownerUserInfoId = self.request.query_params.get('ownerUserInfoId', None)
+        to_BoardId = self.request.query_params.get('to_BoardId', None)
+        if ownerUserInfoId is not None:
+            queryset = queryset.filter(owner=ownerUserInfoId)
+
+        if to_BoardId is not None:
+            queryset = queryset.filter(to_Board=to_BoardId)
+        return queryset
+        # def perform_create(self, serializer):
+        #     newUserInfo = UserInfo()
+        #     newUserInfo.user = self.request.user
+        #     serializer.save(owner=newUserInfo)
 
 
 class OrderDetail(generics.RetrieveAPIView):
@@ -157,13 +167,17 @@ class SampleList(generics.ListCreateAPIView):
     def get_queryset(self):
         queryset = Sample.objects.all()
         ownerBuildingId = self.request.query_params.get('ownerBuildingId', None)
-
+        _coordinateX = self.request.query_params.get('coordinateX', None)
+        _coordinateY = self.request.query_params.get('coordinateY', None)
         if ownerBuildingId is not None:
+            if _coordinateX is not None and _coordinateY is not None:
+                queryset = queryset.filter(ownerBuilding=ownerBuildingId).filter(coordinateX=_coordinateX).filter(
+                    coordinateY=_coordinateY)
             queryset = queryset.filter(ownerBuilding=ownerBuildingId)
 
         return queryset
-    # def perform_create(self, serializer):
-    #     serializer.save(owner=self.request.user)
+        # def get_serializer(self, instance=None, data=None, many=False, partial=False):
+        #     return super(generics.ListCreateAPIView, self).get_serializer(many=True, partial=False)
 
 
 class SampleDetail(generics.RetrieveAPIView):

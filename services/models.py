@@ -1,14 +1,15 @@
 from django.db import models
 from django.utils.timezone import utc
 from django.contrib.auth.models import User
+import uuid
 import datetime
 
 
 class Building(models.Model):
-    mapUrl = models.CharField(max_length=300, null=True, help_text='map url for this building.')
+    mapUrl = models.CharField(max_length=300, null=True, blank=True, help_text='map url for this building.')
     latitude = models.CharField(default='0', max_length=60, help_text='latitude for this building')
     longitude = models.CharField(default='0', max_length=60, help_text='longitude for this building')
-    description = models.TextField(null=True,
+    description = models.TextField(blank=True, default="",
                                    help_text='additional description for this building, where it located, name and etc.')
     creationTime = models.DateTimeField(auto_now_add=True)
 
@@ -22,8 +23,12 @@ class Board(models.Model):
     # isLocked = models.BooleanField("If obstacle sensor covered by sth, the value is True, otherwise False")
     coordinateX = models.IntegerField(default=0, help_text='X coordinate for this board located in a building')
     coordinateY = models.IntegerField(default=0, help_text='Y coordinate for this board located in a building')
-    description = models.TextField(null=True,
+    description = models.TextField(blank=True, default="",
                                    help_text='additional description for this board, will show in mobile device')
+    boardIdentity = models.TextField(primary_key=True, max_length=80,
+                                     help_text='An unique identity value to identity a board, like the board Mac and etc.')
+    command = models.TextField(blank=True, default="",
+                               help_text='A pre-defined command text which should be read and executed by board')
 
     def __str__(self):
         if self.isCovered:
@@ -80,13 +85,13 @@ class UserInfo(models.Model):
 
 class Order(models.Model):
     owner = models.ForeignKey(UserInfo, related_name='orders')
-    to_Board = models.ForeignKey(Board)
+    to_Board = models.ForeignKey(Board, related_name='orderDetail')
     creation_Time = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=200)
 
     def __str__(self):
         return "order is on board:'" + str(
-            self.to_Board.pk) + "' by users: '" + str(self.owner) + "' at: '" + str(
+            self.to_Board) + "' by users: '" + str(self.owner) + "' at: '" + str(
             self.creation_Time) + "', now status: '" + self.status + "'"
 
     def ownedbyuserstr(self):
@@ -101,8 +106,10 @@ class Sample(models.Model):
     coordinateY = models.IntegerField(default=0, help_text='Y coordinate for this sampling point located in a building')
     # sampleSignalDescriptors = models.CharField(max_length=200)
     creation_Time = models.DateTimeField(auto_now_add=True)
-    description = models.TextField(null=True,
-                                   help_text='additional description for this sample point.')
+    description = models.TextField(default="", help_text='additional description for this sample point.')
+
+    class Meta:
+        unique_together = ('ownerBuilding', 'coordinateX', 'coordinateY')
 
     def __str__(self):
         return "Sample for building " + str(self.ownerBuilding)
