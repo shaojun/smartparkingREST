@@ -17,6 +17,7 @@ from django.http import HttpResponseRedirect
 from django.template import RequestContext
 from django.shortcuts import render_to_response
 from django.conf import settings
+from django.core.exceptions import ValidationError
 import os
 
 
@@ -100,11 +101,11 @@ class UserInfoList(generics.ListCreateAPIView):
         else:
             return UserInfo.objects.filter(user=self.request.user)
 
-        # def list(self, request):
-        #     # Note the use of `get_queryset()` instead of `self.queryset`
-        #     queryset = self.get_queryset()
-        #     serializer = UserSerializer(queryset, many=True)
-        #     return Response(serializer.data)
+            # def list(self, request):
+            #     # Note the use of `get_queryset()` instead of `self.queryset`
+            #     queryset = self.get_queryset()
+            #     serializer = UserSerializer(queryset, many=True)
+            #     return Response(serializer.data)
 
 
 class UserInfoDetail(generics.RetrieveAPIView):
@@ -152,8 +153,31 @@ class OrderList(generics.ListCreateAPIView):
         #     newUserInfo.user = self.request.user
         #     serializer.save(owner=newUserInfo)
 
+    def create(self, request, *args, **kwargs):
+        newOrder = request.data
+        parts = newOrder["to_Board"].split("/")
+        new_to_board_id = parts[len(parts) - 2]
+        if Order.objects.filter(to_Board=new_to_board_id).exists():
+            return Response("board: " + new_to_board_id + " already have an order on", status=status.HTTP_409_CONFLICT)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
-class OrderDetail(generics.RetrieveAPIView):
+        # def perform_create(self, serializer):
+        #     newOrder = self.request.data
+        #     parts = newOrder["to_Board"].split("/")
+        #     new_to_board_id = parts[len(parts) - 2]
+        #     if Order.objects.filter(to_Board=new_to_board_id).exists():
+        #         # Response(data, status=None, template_name=None, headers=None, content_type=None)
+        #         # return Response(status=status.HTTP_409_CONFLICT)
+        #         raise ValidationError('Already have an order on board: ' + new_to_board_id)
+        #     else:
+        #         serializer.save()
+
+
+class OrderDetail(generics.RetrieveDestroyAPIView):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
     permission_classes = (permissions.IsAuthenticated, IsOwnerOrDeny)
@@ -172,7 +196,7 @@ class SampleList(generics.ListCreateAPIView):
         if ownerBuildingId is not None:
             if _coordinateX is not None and _coordinateY is not None:
                 queryset = queryset.filter(ownerBuilding=ownerBuildingId).filter(coordinateX=_coordinateX).filter(
-                    coordinateY=_coordinateY)
+                        coordinateY=_coordinateY)
             queryset = queryset.filter(ownerBuilding=ownerBuildingId)
 
         return queryset
@@ -180,7 +204,7 @@ class SampleList(generics.ListCreateAPIView):
         #     return super(generics.ListCreateAPIView, self).get_serializer(many=True, partial=False)
 
 
-class SampleDetail(generics.RetrieveAPIView):
+class SampleDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Sample.objects.all()
     serializer_class = SampleSerializer
     permission_classes = (permissions.IsAuthenticated, IsTechniciansGroupOrReadOnly,)
@@ -195,7 +219,7 @@ class SampleDescriptorList(generics.ListCreateAPIView):
     #     serializer.save(owner=self.request.user)
 
 
-class SampleDescriptorDetail(generics.RetrieveAPIView):
+class SampleDescriptorDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = SampleDescriptor.objects.all()
     serializer_class = SampleDescriptorSerializer
     permission_classes = (permissions.IsAuthenticated, IsTechniciansGroupOrReadOnly,)
@@ -214,7 +238,7 @@ def test0(request):
 def test1(request):
     groups = Group.objects.all()
     return HttpResponse(
-        str(groups[0].__dict__) + "----------" + str(groups[1].__dict__) + "----------" + str(groups[2].__dict__))
+            str(groups[0].__dict__) + "----------" + str(groups[1].__dict__) + "----------" + str(groups[2].__dict__))
 
 
 # ====================== upload files =========================
@@ -248,9 +272,9 @@ def uploadFiles(request):
         form = DocumentForm()  # A empty, unbound form
     # Render list page with the documents and the form
     return render_to_response(
-        'services/uploadFile.html',
-        {'documents': documents, 'form': form},
-        context_instance=RequestContext(request)
+            'services/uploadFile.html',
+            {'documents': documents, 'form': form},
+            context_instance=RequestContext(request)
     )
 
 
@@ -269,7 +293,7 @@ def deleteUploadedFile(request):
     fileName = request.GET.get("filename")
     if not fileName:
         raise Exception(
-            "need provide the filename for deleting")
+                "need provide the filename for deleting")
     targetFile = Document.objects.get(docfile=fileName)
     targetFile.delete()
     # allFiles = Document.objects.get(docfile=filename)

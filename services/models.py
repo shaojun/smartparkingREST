@@ -7,6 +7,7 @@ import datetime
 
 class Building(models.Model):
     mapUrl = models.CharField(max_length=300, null=True, blank=True, help_text='map url for this building.')
+    mapScale = models.IntegerField(default=25, help_text='1 meter in real equals how many pixels in map')
     latitude = models.CharField(default='0', max_length=60, help_text='latitude for this building')
     longitude = models.CharField(default='0', max_length=60, help_text='longitude for this building')
     description = models.TextField(blank=True, default="",
@@ -32,28 +33,29 @@ class Board(models.Model):
 
     def __str__(self):
         if self.isCovered:
-            return "board: " + str(self.pk) + " (occupied), with X-Y coor:" + str(self.coordinateX) + "-" + str(
-                self.coordinateY) + ", " + str(self.description)
+            return "board: " + self.boardIdentity + " (occupied), with X-Y coor:" + str(self.coordinateX) + "-" + str(
+                    self.coordinateY) + ", " + str(self.description)
         else:
-            return "board: " + str(self.pk) + " (no occupied), with X-Y: " + str(self.coordinateX) + "-" + str(
-                self.coordinateY) + ", " + str(self.description)
+            return "board: " + self.boardIdentity + " (no occupied), with X-Y: " + str(self.coordinateX) + "-" + str(
+                    self.coordinateY) + ", " + str(self.description)
 
 
 class BeaconAround(models.Model):
-    ownerBoard = models.ForeignKey(Board)
-    uuid = models.CharField(max_length=40)
-    major_Id = models.CharField(max_length=20)
-    minor_Id = models.CharField(max_length=20)
-    mac_address = models.CharField(max_length=40)
-    tx_value = models.IntegerField(default=0)
-    rssi_value = models.IntegerField(default=0)
-    caculated_distance = models.FloatField()
+    ownerBoard = models.ForeignKey(Board, help_text='Which board sensed this beacon signal.')
+    uuid = models.CharField(max_length=40, help_text='uuid value read in this beacon signal.')
+    major_Id = models.CharField(max_length=20, help_text='majorId value read in this beacon signal.')
+    minor_Id = models.CharField(max_length=20, help_text='minorId value read in this beacon signal.')
+    mac_address = models.CharField(max_length=40, help_text='macAdrress value read in this beacon signal.')
+    tx_value = models.IntegerField(default=0, help_text='Tx value read in this beacon signal.')
+    rssi_value = models.IntegerField(default=0, help_text='RSSI value for this beacon signal.')
+    caculated_distance = models.FloatField(
+        help_text='How far this beacon sender from board, caculated based on Tx and Rssi')
     updated_time = models.DateTimeField(default=datetime.datetime.now, blank=True)
     creation_time = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return "uuid: " + self.uuid + "|" + self.major_Id + "|" + self.minor_Id + ", rssi: " + str(
-            self.rssi_value) + ", dis(meter): " + str(self.caculated_distance)
+                self.rssi_value) + ", dis(meter): " + str(self.caculated_distance)
 
     def ownedbyboardstr(self):
         return str(self.ownerBoard)
@@ -88,11 +90,14 @@ class Order(models.Model):
     to_Board = models.ForeignKey(Board, related_name='orderDetail')
     creation_Time = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=200)
+    isActive = models.BooleanField(default=True,
+                                   help_text='Is this order still active? an order was finished or cancelled, or manually changed '
+                                             'by someone could cause this to inactive')
 
     def __str__(self):
         return "order is on board:'" + str(
-            self.to_Board) + "' by users: '" + str(self.owner) + "' at: '" + str(
-            self.creation_Time) + "', now status: '" + self.status + "'"
+                self.to_Board) + "' by users: '" + str(self.owner) + "' at: '" + str(
+                self.creation_Time) + "', now status: '" + self.status + "', isOrderStillActive: " + str(self.isActive)
 
     def ownedbyuserstr(self):
         return str(self.owner)
@@ -128,7 +133,7 @@ class SampleDescriptor(models.Model):
 
     def __str__(self):
         return "uuid: " + self.uuid + "|" + self.major_Id + "|" + self.minor_Id + ", rssi: " + str(
-            self.rssi_value) + ", dis(meter): " + str(self.caculated_distance)
+                self.rssi_value) + ", dis(meter): " + str(self.caculated_distance)
 
 
 # Create your models here.
